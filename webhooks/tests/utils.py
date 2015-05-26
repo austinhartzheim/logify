@@ -14,7 +14,14 @@ class ShopifyRequestFactory():
     Emulate Shopify webhook requests.
     '''
     
-    def __init__(self):
+    def __init__(self, omit=[], override={}):
+        '''
+        :param iterable omit: An iterable object of headers to omit.
+          Note that only explicitly added for the Shopify emulation
+          can be omitted.
+        '''
+        self.omit = omit
+        self.override = override
         self.factory = django.test.RequestFactory()
     
     def create_shopify_webhook_request(self, path, data):
@@ -30,9 +37,11 @@ class ShopifyRequestFactory():
         :returns: a Django request object containing the given data;
           this can be passed to a view to simulate an actual request.
         '''
+        # Calculate the HMAC
         datastr = json.dumps(data)
         hmac256 = self.compute_hmac(datastr, private_settings.SHARED_SECRET)
         
+        # Define headers to add to the request
         headers = {
             'HTTP_X_REQUEST_ID': uuid.uuid4(),  # Generate a UUID
             'HTTP_X_SHOPIFY_HMAC_SHA256': hmac256,
@@ -41,6 +50,16 @@ class ShopifyRequestFactory():
             'content_type': 'application/json'
         }
         
+        # Omit headers
+        for header in self.omit:
+            if header in headers:
+                headers.pop(header)
+                
+        # Override headers
+        for header, value in self.override.items():
+            headers[header] = value
+        
+        # Create the post request
         return self.factory.post(path, datastr, **headers)
         
         

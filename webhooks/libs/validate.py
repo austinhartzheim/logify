@@ -34,6 +34,8 @@ class ValidateShopifyWebhookRequest():
             return django.http.HttpResponseBadRequest('missing X-Shopify-Hmac-Sha256')
         if 'CONTENT_TYPE' not in request.META:
             return django.http.HttpResponseBadRequest('missing Content-Type')
+        if request.META['CONTENT_TYPE'] != 'application/json':
+            return django.http.HttpResponseBadRequest('bad Content-Type')
         
         # Check that the HMAC is valid
         if not self.validate_shopify_webhook_hmac(request):

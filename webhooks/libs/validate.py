@@ -82,6 +82,6 @@ class ValidateShopifyWebhookRequest():
             for i in range(0, len(a)):
                 if a[i] != b[i]:
                     result = False
-                    count += 1
+                count += 1
             return result
                 

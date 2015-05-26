@@ -1,0 +1,14 @@
+language: python
+python:
+  - "3.2"
+  - "3.3"
+  - "3.4"
+install:
+  - cp logify/private_settings.dist.py logify/private_settings.py
+  - pip install -r requirements.txt
+  - pip install coveralls
+script:
+  - coverage run --source='.' manage.py test
+  - coverage report
+after_success:
+  - coveralls

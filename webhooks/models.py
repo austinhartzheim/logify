@@ -42,6 +42,9 @@ class Customer(models.Model):
 
     addresses = models.ManyToManyField('CustomerAddress')
 
+    def __str__(self):
+        return '%s %s' % (self.first_name, self.last_name)
+
 
 class CustomerTag(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -58,9 +61,13 @@ class CustomerTag(models.Model):
         try:
             obj = cls.objects.get(name=name)
         except cls.DoesNotExist:
-            obj = CustomerTag(name)
+            obj = CustomerTag()
+            obj.name = name
             obj.save()
         return obj
+
+    def __str__(self):
+        return self.name
 
 
 class CustomerAddress(models.Model):
@@ -83,6 +90,10 @@ class CustomerAddress(models.Model):
     zip = models.TextField(blank=True)
 
     phone = models.TextField(blank=True)
+
+    def __str__(self):
+        return '%s, %s, %s, "%s"' % (self.country_code, self.province_code,
+                                     self.city, self.name)
 
 
 # class Checkout(models.Model):

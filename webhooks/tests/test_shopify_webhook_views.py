@@ -102,8 +102,7 @@ class TestShopifyWebHooksTestData(TestCase):
         self.skipTest("Test not implemented")
 
     def test_shopify_customer_create(self):
-        # TODO: create a util function to create requests with valid HMACs
-        path = '/webhooks/shopify/%s/order_create' % self.siteid
+        path = '/webhooks/shopify/%s/customer_create' % self.siteid
         data = {"accepts_marketing":True,
                 "created_at":None,
                 "email":"bob@biller.com",
@@ -234,8 +233,7 @@ class TesetShopifyWebHooksValidData(TestCase):
         self.skipTest("Test not implemented")
 
     def test_shopify_customer_create(self):
-        # TODO: create a util function to create requests with valid HMACs
-        path = '/webhooks/shopify/%s/order_create' % self.siteid
+        path = '/webhooks/shopify/%s/customer_create' % self.siteid
         data = {"accepts_marketing":False,
                 "created_at":"2015-05-27T19:12:18+01:00",
                 "email":"testme@example.com",
@@ -305,6 +303,30 @@ class TesetShopifyWebHooksValidData(TestCase):
                          'The created customer does not have an empty note')
         self.assertEqual(customer.total_spent, Decimal(data['total_spent']),
                          'The created customer has an incorrect total_spent')
+
+        # Modify `data` and create a second customer.
+        data['first_name'] = 'Test2'
+        data['email'] = 'testyou@example.com'
+        data['id'] = 553412612
+        data['tags'] = 'hello, world'
+
+        request = self.factory.create_shopify_webhook_request(path, data)
+        response = views.shopify_customer_create(request, self.siteid)
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+
+        customer = models.Customer.objects.get(shopify_id=data['id'])
+        self.assertEqual(customer.email, data['email'],
+                         'The created customer has an incorrect email')
+
+        tags_as_str = []
+        for tag in customer.tags.all():
+            tags_as_str.append(tag.name)
+
+        self.assertIn('hello', tags_as_str,
+                      'The created customer is missing a tag')
+        self.assertIn('world', tags_as_str,
+                      'The created customer is missing a tag')
 
         # TODO: add tests for the address fields when address parsing is
         #   complete in the view.

@@ -159,14 +159,15 @@ def shopify_customer_create(request, siteid):
     if 'total_spent' in data:
         customer.total_spent = Decimal(data['total_spent'])
 
-    if 'tags' in data:
-        tags = data['tags'].split()
-        for tag in tags:
-            customer.tags.add(CustomerTag.get_or_create(tag))
-
     # TODO: handle addresses
 
-    customer.save()
+    customer.save()  # Customer must be saved before using ManyToMany fields
+
+    if 'tags' in data and data['tags']:
+        tags = data['tags'].split(', ')
+        for tag in tags:
+            customer.tags.add(CustomerTag.get_or_create(tag))
+        customer.save()
 
     return django.http.HttpResponse()
 

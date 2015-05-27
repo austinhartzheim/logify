@@ -12,7 +12,7 @@ CUSTOMER_FIELDS_DIRECT_COPY = [
     # created_at
     'email',
     'first_name',
-    'id',
+    # 'id',
     'last_name',
     'last_order_id',
     'multipass_identifier',
@@ -147,6 +147,7 @@ def shopify_customer_create(request, siteid):
     if data['id'] == None:  # Test request
         return django.http.HttpResponse()
     customer = Customer()
+    customer.shopify_id = data['id']
 
     for fieldname in CUSTOMER_FIELDS_DIRECT_COPY:
         if fieldname in data:

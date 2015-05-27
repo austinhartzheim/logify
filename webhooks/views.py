@@ -9,7 +9,7 @@ from webhooks.libs import validate
 
 CUSTOMER_FIELDS_DIRECT_COPY = [
     'accepts_marketing',
-    #created_at
+    # created_at
     'email',
     'first_name',
     'id',
@@ -20,12 +20,12 @@ CUSTOMER_FIELDS_DIRECT_COPY = [
     'orders_count',
     'state',
     'tax_exempt',
-    #total_spent
-    #updated_at
+    # total_spent
+    # updated_at
     'verified_email',
-    #tags
+    # tags
     'last_order_name',
-    #addresses
+    # addresses
 ]
 
 
@@ -142,31 +142,33 @@ def shopify_fulfillment_update(request, siteid):
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest
 def shopify_customer_create(request, siteid):
-    
+
     data = json.loads(request.body.decode('utf8'))
+    if data['id'] == None:  # Test request
+        return django.http.HttpResponse()
     customer = Customer()
-    
+
     for fieldname in CUSTOMER_FIELDS_DIRECT_COPY:
         if fieldname in data:
             setattr(customer, fieldname, data[fieldname])
-            
+
     # TODO: parse created_at
     # TODO: parse updated_at
-    
+
     if 'total_spent' in data:
         customer.total_spent = Decimal(data['total_spent'])
-        
+
     if 'tags' in data:
         tags = data['tags'].split()
         for tag in tags:
             customer.tags.add(CustomerTag.get_or_create(tag))
-            
+
     # TODO: handle addresses
-    
+
     customer.save()
-    
+
     return django.http.HttpResponse()
-    
+
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest
 def shopify_customer_enable(request, siteid):

@@ -23,80 +23,80 @@ class TestShopifyWebHooksTestData(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.siteid = 'abcd'  # TODO: generate a random site ID
-    
+
     def setUp(self):
         self.factory = utils.ShopifyRequestFactory()
-        
+
     @classmethod
     def tearDownClass(cls):
         pass
-        
+
     def test_shopify_order_create(self):
         self.skipTest("Test not implemented")
-        
+
     def test_shopify_order_updated(self):
         self.skipTest("Test not implemented")
 
     def test_shopify_order_paid(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_order_cancelled(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_order_fulfilled(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_order_delete(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_product_create(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_product_update(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_product_delete(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_cart_create(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_cart_update(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_collection_create(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_collection_update(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_collection_delete(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_customer_group_create(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_customer_group_update(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_customer_group_delete(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_checkout_create(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_checkout_update(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_checkout_delete(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_fulfillment_create(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_fulfillment_update(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_customer_create(self):
         # TODO: create a util function to create requests with valid HMACs
         path = '/webhooks/shopify/%s/order_create' % self.siteid
@@ -121,28 +121,28 @@ class TestShopifyWebHooksTestData(TestCase):
         }
         request = self.factory.create_shopify_webhook_request(path, data)
         response = views.shopify_customer_create(request, self.siteid)
-        
+
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
-        self.assertEqual(len(models.Customer.objects.filter(first_name='Bob')), 1,
-                         'Customer not added to database correctly.')
-        
-    
+        self.assertEqual(len(models.Customer.objects.all()), 0,
+                         'Test requests should not be added.')
+
+
     def test_shopify_customer_enable(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_customer_disable(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_customer_update(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_customer_delete(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_shop_update(self):
         self.skipTest("Test not implemented")
-    
+
     def test_shopify_refund_create(self):
         self.skipTest("Test not implemented")
 

@@ -13,7 +13,7 @@ class ShopifyRequestFactory():
     '''
     Emulate Shopify webhook requests.
     '''
-    
+
     def __init__(self, omit=[], override={}):
         '''
         :param iterable omit: An iterable object of headers to omit.
@@ -23,8 +23,8 @@ class ShopifyRequestFactory():
         self.omit = omit
         self.override = override
         self.factory = django.test.RequestFactory()
-    
-    def create_shopify_webhook_request(self, path, data):
+
+    def create_shopify_webhook_request(self, path, data, topic='/'):
         '''
         Create a Shopify webhook request for testing purposes. The
         returned request object will have headers and a Sha256 HMAC as
@@ -34,35 +34,37 @@ class ShopifyRequestFactory():
           RequestFactory for generating the request object.
         :param dict data: This dict will be converted to a JSON string,
           used to compute the HMAC, and used as the request body.
+        :param str topic: The topic for the Shopify-Topic header. This
+          has a form such as "customers/create".
         :returns: a Django request object containing the given data;
           this can be passed to a view to simulate an actual request.
         '''
         # Calculate the HMAC
         datastr = json.dumps(data)
         hmac256 = self.compute_hmac(datastr, private_settings.SHARED_SECRET)
-        
+
         # Define headers to add to the request
         headers = {
             'HTTP_X_REQUEST_ID': uuid.uuid4(),  # Generate a UUID
             'HTTP_X_SHOPIFY_HMAC_SHA256': hmac256,
-            'HTTP_X_SHOPIFY_TOPIC': 'customers/update',
+            'HTTP_X_SHOPIFY_TOPIC': topic,
             'HTTP_X_SHOPIFY_SHOP_DOMAIN': 'example.myshopify.com',
             'content_type': 'application/json'
         }
-        
+
         # Omit headers
         for header in self.omit:
             if header in headers:
                 headers.pop(header)
-                
+
         # Override headers
         for header, value in self.override.items():
             headers[header] = value
-        
+
         # Create the post request
         return self.factory.post(path, datastr, **headers)
-        
-        
+
+
     def compute_hmac(self, data, shared_secret):
         '''
         Calculate the HMAC for `data` and `shared_secret`. Theese
@@ -77,7 +79,19 @@ class ShopifyRequestFactory():
             data = data.encode('utf8')
         if isinstance(shared_secret, str):
             shared_secret = shared_secret.encode('utf8')
-            
+
         # Compute the digest
         digest = hmac.new(shared_secret, data, hashlib.sha256).digest()
         return base64.b64encode(digest).decode('utf8')
+
+    def customer_create(self, path, data):
+        topic = 'customers/create'
+        return self.create_shopify_webhook_request(path, data, topic)
+
+    def customer_update(self, path, data):
+        topic = 'customers/update'
+        return self.create_shopify_webhook_request(path, data, topic)
+
+    def customer_delete(self, path, data):
+        topic = 'customers/delete'
+        return self.create_shopify_webhook_request(path, data, topic)

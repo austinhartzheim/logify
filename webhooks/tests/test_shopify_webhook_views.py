@@ -122,7 +122,7 @@ class TestShopifyWebHooksTestData(TestCase):
                 "last_order_name":None,
                 "addresses":[]
         }
-        request = self.factory.create_shopify_webhook_request(path, data)
+        request = self.factory.customer_create(path, data)
         response = views.shopify_customer_create(request, self.siteid)
 
         self.assertEqual(response.status_code, 200,
@@ -158,7 +158,7 @@ class TestShopifyWebHooksTestData(TestCase):
                 "last_order_name":None,
                 "addresses":[]
         }
-        request = self.factory.create_shopify_webhook_request(path, data)
+        request = self.factory.customer_update(path, data)
         response = views.shopify_customer_update(request, self.siteid)
 
         self.assertEqual(response.status_code, 200,
@@ -313,7 +313,7 @@ class TesetShopifyWebHooksValidData(TestCase):
                      "default":True}
                 ]
         }
-        request = self.factory.create_shopify_webhook_request(path, data)
+        request = self.factory.customer_create(path, data)
         response = views.shopify_customer_create(request, self.siteid)
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
@@ -336,7 +336,7 @@ class TesetShopifyWebHooksValidData(TestCase):
         data['id'] = 553412612
         data['tags'] = 'hello, world'
 
-        request = self.factory.create_shopify_webhook_request(path, data)
+        request = self.factory.customer_create(path, data)
         response = views.shopify_customer_create(request, self.siteid)
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
@@ -427,7 +427,7 @@ class TesetShopifyWebHooksValidData(TestCase):
                     }
                 ]
         }
-        request = self.factory.create_shopify_webhook_request(path, data)
+        request = self.factory.customer_update(path, data)
         response = views.shopify_customer_update(request, self.siteid)
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
@@ -453,7 +453,7 @@ class TesetShopifyWebHooksValidData(TestCase):
         data['email'] = 'updatedemail@example.com'
         data['tags'] = 'tag1, tag2'
 
-        request = self.factory.create_shopify_webhook_request(path, data)
+        request = self.factory.customer_update(path, data)
         response = views.shopify_customer_update(request, self.siteid)
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')

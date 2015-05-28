@@ -167,7 +167,15 @@ class TestShopifyWebHooksTestData(TestCase):
                          'Test requests should not be added')
 
     def test_shopify_customer_delete(self):
-        self.skipTest("Test not implemented")
+        path = '/webhooks/shoify/%s/customer_delete' % self.siteid
+        data = {"id":None,
+                "addresses":[]
+        }
+        request = self.factory.customer_delete(path, data)
+        response = views.shopify_customer_delete(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
 
     def test_shopify_shop_update(self):
         self.skipTest("Test not implemented")
@@ -176,7 +184,7 @@ class TestShopifyWebHooksTestData(TestCase):
         self.skipTest("Test not implemented")
 
 
-class TesetShopifyWebHooksValidData(TestCase):
+class TestShopifyWebHooksValidData(TestCase):
     '''
     Perform tests under normal use cases just to make sure we don't
     miss them between the minimalist tests and the absurd extremes.
@@ -481,7 +489,29 @@ class TesetShopifyWebHooksValidData(TestCase):
 
 
     def test_shopify_customer_delete(self):
-        self.skipTest("Test not implemented")
+
+        # Test deletion with an existing customer
+        customer = models.Customer()
+        customer.shopify_id = 534645123
+        customer.save()
+
+        path = '/webhooks/shopify/%s/customer_delete' % self.siteid
+        data = {'id': customer.shopify_id}
+        request = self.factory.customer_delete(path, data)
+        response = views.shopify_customer_delete(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+        self.assertEqual(len(models.Customer.objects.all()), 0,
+                         'Customer not correctly deleted')
+
+        # Reply the delete to test when customer does not exist
+        response = views.shopify_customer_delete(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+        self.assertEqual(len(models.Customer.objects.all()), 0,
+                         'Wow, this is really weird')
 
     def test_shopify_shop_update(self):
         self.skipTest("Test not implemented")

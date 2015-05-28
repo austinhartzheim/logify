@@ -30,7 +30,7 @@ class Customer(models.Model):
 
     note = models.TextField(blank=True)
     last_order_id = models.BigIntegerField(null=True)
-    orders_count = models.IntegerField()
+    orders_count = models.IntegerField(default=0)
     total_spent = models.DecimalField(default=0, decimal_places=2, max_digits=9)
     tags = models.ManyToManyField('CustomerTag')
 

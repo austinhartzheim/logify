@@ -225,7 +225,21 @@ def shopify_customer_update(request, siteid):
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest
 def shopify_customer_delete(request, siteid):
-    pass
+    '''
+    If the given customer ID already exists, delete it. If it cannot be
+    found, do nothing.
+    '''
+    data = json.loads(request.body.decode('utf8'))
+    if data['id'] == None:  # Test request
+        return django.http.HttpResponse()
+
+    try:
+        customer = Customer.objects.get(shopify_id=data['id'])
+        customer.delete()
+    except Customer.DoesNotExist:
+        pass
+
+    return django.http.HttpResponse()
 
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest

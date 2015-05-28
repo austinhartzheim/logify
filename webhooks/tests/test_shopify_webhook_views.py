@@ -138,7 +138,33 @@ class TestShopifyWebHooksTestData(TestCase):
         self.skipTest("Test not implemented")
 
     def test_shopify_customer_update(self):
-        self.skipTest("Test not implemented")
+        path = '/webhooks/shopify/%s/customer_update' % self.siteid
+        data = {"accepts_marketing":True,
+                "created_at":None,
+                "email":"bob@biller.com",
+                "first_name":"Bob",
+                "id":None,
+                "last_name":"Biller",
+                "last_order_id":None,
+                "multipass_identifier":None,
+                "note":"This customer loves ice cream",
+                "orders_count":0,
+                "state":"disabled",
+                "tax_exempt":False,
+                "total_spent":"0.00",
+                "updated_at":None,
+                "verified_email":True,
+                "tags":"",
+                "last_order_name":None,
+                "addresses":[]
+        }
+        request = self.factory.create_shopify_webhook_request(path, data)
+        response = views.shopify_customer_update(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+        self.assertEqual(len(models.Customer.objects.all()), 0,
+                         'Test requests should not be added')
 
     def test_shopify_customer_delete(self):
         self.skipTest("Test not implemented")
@@ -339,7 +365,120 @@ class TesetShopifyWebHooksValidData(TestCase):
         self.skipTest("Test not implemented")
 
     def test_shopify_customer_update(self):
-        self.skipTest("Test not implemented")
+        '''
+        Check that this view will create a new customer object with the
+        given data if a customer does not currently exist. If a
+        customer witht he given ID already exists, test that it is then
+        updated with the modified data.
+        '''
+        # Test creation of unknown customers
+        path = '/webhooks/shopify/%s/customer_update' % self.siteid
+        data = {"accepts_marketing":False,
+                "created_at":"2015-05-27T19:12:18+01:00",
+                "email":"testme@example.com",
+                "first_name":"Test",
+                "id":553412611,
+                "last_name":"Customer",
+                "last_order_id":None,
+                "multipass_identifier":None,
+                "note":"",
+                "orders_count":0,
+                "state":"disabled",
+                "tax_exempt":False,
+                "total_spent":"0.00",
+                "updated_at":"2015-05-27T21:30:34+01:00",
+                "verified_email":True,
+                "tags":"hello, secondtag, shorttag, world",
+                "last_order_name":None,
+                "default_address": {
+                    "address1":"",
+                    "address2":"",
+                    "city":"",
+                    "company":"",
+                    "country":"United States",
+                    "first_name":"Test",
+                    "id":638359939,
+                    "last_name":"Customer",
+                    "phone":"",
+                    "province":"Alabama",
+                    "zip":"",
+                    "name":"Test Customer",
+                    "province_code":"AL",
+                    "country_code":"US",
+                    "country_name":"United States",
+                    "default":True
+                }, "addresses":[
+                    {"address1":"",
+                     "address2":"",
+                     "city":"",
+                     "company":"",
+                     "country":"United States",
+                     "first_name":"Test",
+                     "id":638359939,
+                     "last_name":"Customer",
+                     "phone":"",
+                     "province":"Alabama",
+                     "zip":"",
+                     "name":"Test Customer",
+                     "province_code":"AL",
+                     "country_code":"US",
+                     "country_name":"United States",
+                     "default":True
+                    }
+                ]
+        }
+        request = self.factory.create_shopify_webhook_request(path, data)
+        response = views.shopify_customer_update(request, self.siteid)
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+
+        customers = models.Customer.objects.all()
+        self.assertEqual(len(customers), 1,
+                         'Customer update resulted in incorrect object count')
+
+        customer = customers[0]
+        self.assertEqual(customer.email, data['email'],
+                         'Customer fields not set correctly during update')
+
+        tags_as_str = []
+        for tag in customer.tags.all():
+            tags_as_str.append(tag.name)
+
+        self.assertIn('hello', tags_as_str,
+                      'The created customer is missing a tag')
+        self.assertIn('world', tags_as_str,
+                      'The created customer is missing a tag')
+
+        # Test that existing customers are properly updated.
+        data['email'] = 'updatedemail@example.com'
+        data['tags'] = 'tag1, tag2'
+
+        request = self.factory.create_shopify_webhook_request(path, data)
+        response = views.shopify_customer_update(request, self.siteid)
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+
+        customers = models.Customer.objects.all()
+        self.assertEqual(len(customers), 1,
+                         'Customer update resulted in incorrect object count')
+
+        customer = customers[0]
+        self.assertEqual(customer.email, data['email'],
+                         'Customer fields not set correctly during update')
+
+        tags_as_str = []
+        for tag in customer.tags.all():
+            tags_as_str.append(tag.name)
+
+        self.assertIn('tag1', tags_as_str,
+                      'The created customer is missing a tag')
+        self.assertIn('tag2', tags_as_str,
+                      'The created customer is missing a tag')
+        self.assertNotIn('hello', tags_as_str,
+                         'Old tag not deleted during update')
+        self.assertNotIn('world', tags_as_str,
+                         'Old tag not deleted during update')
+
 
     def test_shopify_customer_delete(self):
         self.skipTest("Test not implemented")

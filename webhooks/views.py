@@ -184,7 +184,43 @@ def shopify_customer_disable(request, siteid):
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest
 def shopify_customer_update(request, siteid):
-    pass
+    '''
+    If the given customer ID already exists, update the data for that
+    customer object. If the customer ID does not exist, then create a
+    new customer object with the given data.
+    '''
+
+    data = json.loads(request.body.decode('utf8'))
+    if data['id'] == None:  # Test request
+        return django.http.HttpResponse()
+
+    try:
+        customer = Customer.objects.get(shopify_id=data['id'])
+    except Customer.DoesNotExist:
+        return shopify_customer_create(request, siteid)
+
+    for fieldname in CUSTOMER_FIELDS_DIRECT_COPY:
+        if fieldname in data:
+            setattr(customer, fieldname, data[fieldname])
+
+    # TODO: parse created_at
+    # TODO: parse updated_at
+
+    if 'total_spent' in data:
+        customer.total_spent = Decimal(data['total_spent'])
+
+    # TODO: handle addresses
+
+    customer.save()
+
+    if 'tags' in data and data['tags']:
+        customer.tags.clear()
+        tags = data['tags'].split(', ')
+        for tag in tags:
+            customer.tags.add(CustomerTag.get_or_create(tag))
+        customer.save()
+
+    return django.http.HttpResponse()
 
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest

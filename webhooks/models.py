@@ -108,5 +108,65 @@ class CustomerAddress(models.Model):
 #     pass
 #
 #
-# class Shop(models.Model):
-#     pass
+class Shop(models.Model):
+    shopify_id = models.BigIntegerField(unique=True)
+
+    # Basic data
+    name = models.TextField(blank=True)
+    has_storefront = models.BooleanField(default=False)
+    myshopify_domain = models.TextField(blank=True, null=True)
+    created_at = models.TextField(null=True)
+
+    #: The contact email address for the shop
+    email = models.EmailField()
+    #: The customer support email for the shop
+    customer_email = models.EmailField(blank=True)
+
+    shop_owner = models.TextField()
+    #: Indicates if the store front is password protected
+    password_enabled = models.BooleanField(default=False)
+    domain = models.TextField(null=True)
+
+    # Location information
+    province_code = models.CharField(max_length=2)
+    zip = models.TextField(blank=True)
+    country_code = models.CharField(max_length=2)
+    country = models.TextField(default='US')
+    primary_locale = models.CharField(max_length=10)
+    primary_location_id = models.BigIntegerField(null=True)
+    province = models.TextField()
+    city = models.TextField()
+    address1 = models.TextField()
+    phone = models.TextField()
+    country_name = models.TextField()
+    latitude = models.FloatField(default=None, null=True)
+    longitude = models.FloatField(default=None, null=True)
+    timezone = models.TextField(default='(GMT-05:00) Eastern Time (US & Canada)')
+    #: https://www.iana.org/time-zones
+    iana_timezone = models.TextField(null=True)
+
+    # Plan information
+    plan_name = models.CharField(max_length=25, null=True)
+    plan_display_name = models.CharField(max_length=25)
+    #: Referral code
+    source = models.TextField(default=None, null=True)
+
+    # Taxes
+    county_taxes = models.NullBooleanField(default=None)
+    tax_shipping = models.NullBooleanField(default=None)
+    taxes_included = models.NullBooleanField(default=None)
+
+    # Currency/format strings
+    currency = models.CharField(max_length=3)
+    money_in_emails_format = models.TextField(default='${{amount}}')
+    money_with_currency_in_emails_format = models.TextField(default='${{amount}} USD')
+    money_with_currency_format = models.TextField(default='$ {{amount}} USD')
+    money_format = models.TextField(default='$ {{amount}}')
+
+    # Google Apps settings
+    google_apps_login_enabled = models.NullBooleanField(default=None)
+    google_apps_domain = models.TextField()
+
+    # Other
+    requires_extra_payments_agreement = models.BooleanField(default=False)
+    eligible_for_payments = models.BooleanField(default=True)

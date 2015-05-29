@@ -18,6 +18,27 @@ from django.db import models
 
 
 class Customer(models.Model):
+    DIRECT_COPY_FIELDS = [
+        'accepts_marketing',
+        # created_at
+        'email',
+        'first_name',
+        # 'id',
+        'last_name',
+        'last_order_id',
+        'multipass_identifier',
+        'note',
+        'orders_count',
+        'state',
+        'tax_exempt',
+        # total_spent
+        # updated_at
+        'verified_email',
+        # tags
+        'last_order_name',
+        # addresses
+    ]
+
     shopify_id = models.BigIntegerField(unique=True)
 
     created_at = models.DateTimeField(null=True)
@@ -109,6 +130,49 @@ class CustomerAddress(models.Model):
 #
 #
 class Shop(models.Model):
+    DIRECT_COPY_FIELDS = [
+        'address1',
+        'city',
+        'country',
+        'country_code',
+        'country_name',
+        'county_taxes',
+        # 'created_at',
+        'currency',
+        'customer_email',
+        'domain',
+        'eligible_for_payments',
+        'email',
+        'google_apps_domain',
+        'google_apps_login_enabled',
+        'has_storefront',
+        'iana_timezone',
+        # 'id',
+        'latitude',
+        'longitude',
+        'money_format',
+        'money_in_emails_format',
+        'money_with_currency_format',
+        'money_with_currency_in_emails_format',
+        'myshopify_domain',
+        'name',
+        'password_enabled',
+        'phone',
+        'plan_display_name',
+        'plan_name',
+        'primary_locale',
+        'primary_location_id',
+        'province',
+        'province_code',
+        'requires_extra_payments_agreement',
+        'shop_owner',
+        'source',
+        'tax_shipping',
+        'taxes_included',
+        'timezone',
+        'zip'
+    ]
+
     shopify_id = models.BigIntegerField(unique=True)
 
     # Basic data

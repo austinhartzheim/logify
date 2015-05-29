@@ -95,3 +95,7 @@ class ShopifyRequestFactory():
     def customer_delete(self, path, data):
         topic = 'customers/delete'
         return self.create_shopify_webhook_request(path, data, topic)
+
+    def shop_update(self, path, data):
+        topic = 'shop/update'
+        return self.create_shopify_webhook_request(path, data, topic)

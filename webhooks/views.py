@@ -28,6 +28,49 @@ CUSTOMER_FIELDS_DIRECT_COPY = [
     # addresses
 ]
 
+SHOP_FIELDS_DIRECT_COPY = [
+    'address1',
+    'city',
+    'country',
+    'country_code',
+    'country_name',
+    'county_taxes',
+    # 'created_at',
+    'currency',
+    'customer_email',
+    'domain',
+    'eligible_for_payments',
+    'email',
+    'google_apps_domain',
+    'google_apps_login_enabled',
+    'has_storefront',
+    'iana_timezone',
+    # 'id',
+    'latitude',
+    'longitude',
+    'money_format',
+    'money_in_emails_format',
+    'money_with_currency_format',
+    'money_with_currency_in_emails_format',
+    'myshopify_domain',
+    'name',
+    'password_enabled',
+    'phone',
+    'plan_display_name',
+    'plan_name',
+    'primary_locale',
+    'primary_location_id',
+    'province',
+    'province_code',
+    'requires_extra_payments_agreement',
+    'shop_owner',
+    'source',
+    'tax_shipping',
+    'taxes_included',
+    'timezone',
+    'zip'
+]
+
 
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest
@@ -244,7 +287,25 @@ def shopify_customer_delete(request, siteid):
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest
 def shopify_shop_update(request, siteid):
-    pass
+
+    data = json.loads(request.body.decode('utf8'))
+    if data['id'] is None:  # Test request
+        return django.http.HttpResponse()
+
+    try:
+        shop = Shop.objects.get(shopify_id=data['id'])
+    except Shop.DoesNotExist:
+        shop = Shop()
+        shop.shopify_id = data['id']
+
+    for fieldname in SHOP_FIELDS_DIRECT_COPY:
+        if fieldname in data:
+            setattr(shop, fieldname, data[fieldname])
+
+    # TODO: parse created_at
+
+    shop.save()
+    return django.http.HttpResponse()
 
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest

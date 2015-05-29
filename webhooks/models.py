@@ -164,8 +164,8 @@ class Shop(models.Model):
     money_format = models.TextField(default='$ {{amount}}')
 
     # Google Apps settings
-    google_apps_login_enabled = models.NullBooleanField(default=None)
-    google_apps_domain = models.TextField()
+    google_apps_login_enabled = models.NullBooleanField(default=None, null=True)
+    google_apps_domain = models.TextField(default=None, null=True)
 
     # Other
     requires_extra_payments_agreement = models.BooleanField(default=False)

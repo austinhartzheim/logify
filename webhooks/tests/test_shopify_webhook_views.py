@@ -383,8 +383,7 @@ class TestShopifyWebHooksValidData(TestCase):
         customer = customer_objects[0]
         self.assertEqual(customer.shopify_id, data['id'],
                          'The created customer has an incorrect shopify_id')
-        self.assertEqual(customer.note, data['note'],
-                         'The created customer does not have an empty note')
+        self.__check_copy_field_validity(customer, data)
         self.assertEqual(customer.total_spent, Decimal(data['total_spent']),
                          'The created customer has an incorrect total_spent')
 
@@ -400,8 +399,7 @@ class TestShopifyWebHooksValidData(TestCase):
                          'View returned an HTTP error code')
 
         customer = models.Customer.objects.get(shopify_id=data['id'])
-        self.assertEqual(customer.email, data['email'],
-                         'The created customer has an incorrect email')
+        self.__check_copy_field_validity(customer, data)
 
         tags_as_str = []
         for tag in customer.tags.all():
@@ -495,8 +493,7 @@ class TestShopifyWebHooksValidData(TestCase):
                          'Customer update resulted in incorrect object count')
 
         customer = customers[0]
-        self.assertEqual(customer.email, data['email'],
-                         'Customer fields not set correctly during update')
+        self.__check_copy_field_validity(customer, data)
 
         tags_as_str = []
         for tag in customer.tags.all():
@@ -521,8 +518,7 @@ class TestShopifyWebHooksValidData(TestCase):
                          'Customer update resulted in incorrect object count')
 
         customer = customers[0]
-        self.assertEqual(customer.email, data['email'],
-                         'Customer fields not set correctly during update')
+        self.__check_copy_field_validity(customer, data)
 
         tags_as_str = []
         for tag in customer.tags.all():
@@ -561,7 +557,7 @@ class TestShopifyWebHooksValidData(TestCase):
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
         self.assertEqual(len(models.Customer.objects.all()), 0,
-                         'Wow, this is really weird')
+                         'The last object should have been deleted')
 
     def test_shopify_shop_update(self):
         '''
@@ -619,12 +615,10 @@ class TestShopifyWebHooksValidData(TestCase):
         shops = models.Shop.objects.all()
         self.assertEqual(len(shops), 1, 'One shop should exist')
         shop = shops[0]
+
         self.assertEqual(shop.shopify_id, data['id'],
                          'Created shop has incorrect shopify_id value')
-        self.assertEqual(shop.city, data['city'],
-                         'Created shop has incorrect zip value')
-        self.assertEqual(shop.shop_owner, data['shop_owner'],
-                         'Created shop has incorrect shop_owner value')
+        self.__check_copy_field_validity(shop, data)
 
         # Test shop update
         data['city'] = 'New York'
@@ -640,13 +634,25 @@ class TestShopifyWebHooksValidData(TestCase):
         shop = shops[0]
         self.assertEqual(shop.shopify_id, data['id'],
                          'Created shop has an incorrect shopify_id')
-        self.assertEqual(shop.city, 'New York',
-                         'Shop has an incorrect country value')
-        self.assertEqual(shop.shop_owner, data['shop_owner'],
-                         'Shop has an incorrect shop_owner value')
+        self.__check_copy_field_validity(shop, data)
 
     def test_shopify_refund_create(self):
         self.skipTest("Test not implemented")
+
+    def __check_copy_field_validity(self, obj, data):
+        '''
+        Loop through all the fields listed in object.DIRECT_COPY_FIELDS and
+        check if the object has these attributes and that they match the
+        data contained in the `data` parameter.
+         
+        :param :class:`django.db.models.Model` obj: the object to check
+          the DIRECT_COPY_FIELDS attributes on.
+        :param dict data: a dictionary object containing the values that
+          the object should have as properties.
+        '''
+        for fieldname in obj.DIRECT_COPY_FIELDS:
+            self.assertEqual(getattr(obj, fieldname), data[fieldname],
+                             'Object has an invalid %s value' % fieldname)
 
 
 class TestShopifyWebHooksAbsurdData(TestCase):

@@ -4,6 +4,8 @@ from decimal import Decimal
 from django.shortcuts import render
 import django.http
 from django.views.decorators.csrf import csrf_exempt
+import dateutil.parser
+
 from webhooks.models import *
 from webhooks.libs import validate
 
@@ -131,8 +133,8 @@ def shopify_customer_create(request, siteid):
         if fieldname in data:
             setattr(customer, fieldname, data[fieldname])
 
-    # TODO: parse created_at
-    # TODO: parse updated_at
+    customer.created_at = dateutil.parser.parse(data['created_at'])
+    customer.updated_at = dateutil.parser.parse(data['updated_at'])
 
     if 'total_spent' in data:
         customer.total_spent = Decimal(data['total_spent'])
@@ -181,8 +183,8 @@ def shopify_customer_update(request, siteid):
         if fieldname in data:
             setattr(customer, fieldname, data[fieldname])
 
-    # TODO: parse created_at
-    # TODO: parse updated_at
+    customer.created_at = dateutil.parser.parse(data['created_at'])
+    customer.updated_at = dateutil.parser.parse(data['updated_at'])
 
     if 'total_spent' in data:
         customer.total_spent = Decimal(data['total_spent'])
@@ -237,7 +239,7 @@ def shopify_shop_update(request, siteid):
         if fieldname in data:
             setattr(shop, fieldname, data[fieldname])
 
-    # TODO: parse created_at
+    shop.created_at = dateutil.parser.parse(data['created_at'])
 
     shop.save()
     return django.http.HttpResponse()

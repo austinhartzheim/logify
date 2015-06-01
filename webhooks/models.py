@@ -126,10 +126,7 @@ class CustomerAddress(models.Model):
 #     pass
 #
 #
-# class Customer(models.Model):
-#     pass
-#
-#
+
 class Shop(models.Model):
     DIRECT_COPY_FIELDS = [
         'address1',

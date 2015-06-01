@@ -321,6 +321,55 @@ class TestShopifyCustomerUpdate(ShopifyViewTest):
                          'Old tag not deleted during update')
 
 
+class TestShopifyCustomerDelete(ShopifyViewTest):
+    '''
+    Test that the shopify_customer_delete view behaves correctly.
+    '''
+    def test_with_test_data(self):
+        '''
+        Send the data from Shopify's test webhook button and monitor
+        for correct behavior.
+        '''
+        path = '/webhooks/shoify/%s/customer_delete' % self.siteid
+        data = {"id":None,
+                "addresses":[]
+        }
+        request = self.factory.customer_delete(path, data)
+        response = views.shopify_customer_delete(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+
+    def test_shopify_customer_delete(self):
+        '''
+        Test the view with actual data to ensure proper functionality.
+        This view is tested for both existing and non-existing customer
+        objects.
+        '''
+        # Test deletion with an existing customer
+        customer = models.Customer()
+        customer.shopify_id = 534645123
+        customer.save()
+
+        path = '/webhooks/shopify/%s/customer_delete' % self.siteid
+        data = {'id': customer.shopify_id}
+        request = self.factory.customer_delete(path, data)
+        response = views.shopify_customer_delete(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+        self.assertEqual(len(models.Customer.objects.all()), 0,
+                         'Customer not correctly deleted')
+
+        # Reply the delete to test when customer does not exist
+        response = views.shopify_customer_delete(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+        self.assertEqual(len(models.Customer.objects.all()), 0,
+                         'The last object should have been deleted')
+
+
 class TesteShopifyMinimalData(TestCase):
     '''
     Test that the minimal amount of data Shopify will allow is still
@@ -422,17 +471,6 @@ class TestShopifyWebHooksTestData(TestCase):
 
     def test_shopify_customer_disable(self):
         self.skipTest("Test not implemented")
-
-    def test_shopify_customer_delete(self):
-        path = '/webhooks/shoify/%s/customer_delete' % self.siteid
-        data = {"id":None,
-                "addresses":[]
-        }
-        request = self.factory.customer_delete(path, data)
-        response = views.shopify_customer_delete(request, self.siteid)
-
-        self.assertEqual(response.status_code, 200,
-                         'View returned an HTTP error code')
 
     def test_shopify_shop_update(self):
         # Test shop creation
@@ -578,31 +616,6 @@ class TestShopifyWebHooksValidData(TestCase):
 
     def test_shopify_customer_disable(self):
         self.skipTest("Test not implemented")
-
-    def test_shopify_customer_delete(self):
-
-        # Test deletion with an existing customer
-        customer = models.Customer()
-        customer.shopify_id = 534645123
-        customer.save()
-
-        path = '/webhooks/shopify/%s/customer_delete' % self.siteid
-        data = {'id': customer.shopify_id}
-        request = self.factory.customer_delete(path, data)
-        response = views.shopify_customer_delete(request, self.siteid)
-
-        self.assertEqual(response.status_code, 200,
-                         'View returned an HTTP error code')
-        self.assertEqual(len(models.Customer.objects.all()), 0,
-                         'Customer not correctly deleted')
-
-        # Reply the delete to test when customer does not exist
-        response = views.shopify_customer_delete(request, self.siteid)
-
-        self.assertEqual(response.status_code, 200,
-                         'View returned an HTTP error code')
-        self.assertEqual(len(models.Customer.objects.all()), 0,
-                         'The last object should have been deleted')
 
     def test_shopify_shop_update(self):
         '''

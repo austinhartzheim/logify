@@ -6,6 +6,10 @@ from webhooks.tests import utils
 
 
 class ShopifyViewTest(TestCase):
+    '''
+    Parent class for Shopify webhook view tests. It provides set-up and
+    tear-down code for the rest of the class.
+    '''
     @classmethod
     def setUpClass(cls):
         cls.siteid = 'abcd'  # TODO: generate a random site ID
@@ -176,7 +180,7 @@ class TestShopifyCustomerCreate(ShopifyViewTest):
 
 class TestShopifyCustomerUpdate(ShopifyViewTest):
     '''
-    Test that the shopify_customer_udpate view behaves correctly.
+    Test that the shopify_customer_update view behaves correctly.
     '''
     def test_with_test_data(self):
         path = '/webhooks/shopify/%s/customer_update' % self.siteid

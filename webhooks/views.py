@@ -122,10 +122,22 @@ def shopify_fulfillment_update(request, siteid):
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest
 def shopify_customer_create(request, siteid):
-
+    '''
+    Test if a customer with the same shopify_id already exists. If one
+    does, then return a 200 response. If one does not, then create it.
+    '''
     data = json.loads(request.body.decode('utf8'))
     if data['id'] == None:  # Test request
         return django.http.HttpResponse()
+
+    # Test if customer already exists
+    try:
+        customer = Customer.objects.get(shopify_id=data['id'])
+        return django.http.HttpResponse()
+    except Customer.DoesNotExist:
+        pass
+
+    # Create a new customer
     customer = Customer()
     customer.shopify_id = data['id']
 

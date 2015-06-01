@@ -177,6 +177,79 @@ class TestShopifyCustomerCreate(ShopifyViewTest):
         # TODO: add tests for the address fields when address parsing is
         #   complete in the view.
 
+    def test_customer_id_already_exists(self):
+        '''
+        Test what happens when this view is called twice with the same
+        data.
+        
+        Shopify does this for customers added via their management
+        interface. See issue #1 on Github.
+        '''
+        path = '/webhooks/shopify/%s/customer_create' % self.siteid
+        data = {"accepts_marketing":False,
+                "created_at":"2015-05-27T19:12:18+01:00",
+                "email":"testme@example.com",
+                "first_name":"Test",
+                "id":553412611,
+                "last_name":"Customer",
+                "last_order_id":None,
+                "multipass_identifier":None,
+                "note":"",
+                "orders_count":0,
+                "state":"disabled",
+                "tax_exempt":False,
+                "total_spent":"0.00",
+                "updated_at":"2015-05-27T19:12:19+01:00",
+                "verified_email":True,
+                "tags":"",
+                "last_order_name":None,
+                "default_address":{
+                    "address1":"",
+                    "address2":"",
+                    "city":"",
+                    "company":"",
+                    "country":"United States",
+                    "first_name":"Test",
+                    "id":638359939,
+                    "last_name":"Customer",
+                    "phone":"",
+                    "province":"Alabama",
+                    "zip":"",
+                    "name":"Test Customer",
+                    "province_code":"AL",
+                    "country_code":"US",
+                    "country_name":"United States",
+                    "default":True},
+                "addresses":[
+                    {"address1":"",
+                     "address2":"",
+                     "city":"",
+                     "company":"",
+                     "country":"United States",
+                     "first_name":"Test",
+                     "id":638359939,
+                     "last_name":"Customer",
+                     "phone":"",
+                     "province":"Alabama",
+                     "zip":"",
+                     "name":"Test Customer",
+                     "province_code":"AL",
+                     "country_code":"US",
+                     "country_name":"United States",
+                     "default":True}
+                ]
+        }
+
+        request = self.factory.customer_create(path, data)
+        response = views.shopify_customer_create(request, self.siteid)
+        self.assertEqual(response.status_code, 200,
+                         'First request in pair failed')
+
+        request = self.factory.customer_create(path, data)
+        response = views.shopify_customer_create(request, self.siteid)
+        self.assertEqual(response.status_code, 200,
+                         'Duplicate request failed')
+
 
 class TestShopifyCustomerUpdate(ShopifyViewTest):
     '''

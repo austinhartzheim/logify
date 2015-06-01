@@ -5,6 +5,175 @@ from webhooks import views, models
 from webhooks.tests import utils
 
 
+class ShopifyViewTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.siteid = 'abcd'  # TODO: generate a random site ID
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
+    def setUp(self):
+        self.factory = utils.ShopifyRequestFactory()
+
+    def _check_copy_field_validity(self, obj, data):
+        '''
+        Loop through all the fields listed in object.DIRECT_COPY_FIELDS and
+        check if the object has these attributes and that they match the
+        data contained in the `data` parameter.
+         
+        :param :class:`django.db.models.Model` obj: the object to check
+          the DIRECT_COPY_FIELDS attributes on.
+        :param dict data: a dictionary object containing the values that
+          the object should have as properties.
+        '''
+        for fieldname in obj.DIRECT_COPY_FIELDS:
+            self.assertEqual(getattr(obj, fieldname), data[fieldname],
+                             'Object has an invalid %s value' % fieldname)
+
+
+class TestShopifyCustomerCreate(ShopifyViewTest):
+    '''
+    Test that the shopify_customer_create view behaves correctly.
+    '''
+    def test_with_test_data(self):
+        '''
+        Send the same data sent by Shopify's test webhook button and
+        monitor for proper behavior.
+        '''
+        path = '/webhooks/shopify/%s/customer_create' % self.siteid
+        data = {"accepts_marketing":True,
+                "created_at":None,
+                "email":"bob@biller.com",
+                "first_name":"Bob",
+                "id":None,
+                "last_name":"Biller",
+                "last_order_id":None,
+                "multipass_identifier":None,
+                "note":"This customer loves ice cream",
+                "orders_count":0,
+                "state":"disabled",
+                "tax_exempt":False,
+                "total_spent":"0.00",
+                "updated_at":None,
+                "verified_email":True,
+                "tags":"",
+                "last_order_name":None,
+                "addresses":[]
+        }
+        request = self.factory.customer_create(path, data)
+        response = views.shopify_customer_create(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+        self.assertEqual(len(models.Customer.objects.all()), 0,
+                         'Test requests should not be added.')
+
+    def test_with_valid_data(self):
+        '''
+        Test the view with actual data to confirm that a customer
+        object is created in the database. Also check that using
+        a modified form of the same data results in a second, distinct
+        object in the database.
+        '''
+        path = '/webhooks/shopify/%s/customer_create' % self.siteid
+        data = {"accepts_marketing":False,
+                "created_at":"2015-05-27T19:12:18+01:00",
+                "email":"testme@example.com",
+                "first_name":"Test",
+                "id":553412611,
+                "last_name":"Customer",
+                "last_order_id":None,
+                "multipass_identifier":None,
+                "note":"",
+                "orders_count":0,
+                "state":"disabled",
+                "tax_exempt":False,
+                "total_spent":"0.00",
+                "updated_at":"2015-05-27T19:12:19+01:00",
+                "verified_email":True,
+                "tags":"",
+                "last_order_name":None,
+                "default_address":{
+                    "address1":"",
+                    "address2":"",
+                    "city":"",
+                    "company":"",
+                    "country":"United States",
+                    "first_name":"Test",
+                    "id":638359939,
+                    "last_name":"Customer",
+                    "phone":"",
+                    "province":"Alabama",
+                    "zip":"",
+                    "name":"Test Customer",
+                    "province_code":"AL",
+                    "country_code":"US",
+                    "country_name":"United States",
+                    "default":True},
+                "addresses":[
+                    {"address1":"",
+                     "address2":"",
+                     "city":"",
+                     "company":"",
+                     "country":"United States",
+                     "first_name":"Test",
+                     "id":638359939,
+                     "last_name":"Customer",
+                     "phone":"",
+                     "province":"Alabama",
+                     "zip":"",
+                     "name":"Test Customer",
+                     "province_code":"AL",
+                     "country_code":"US",
+                     "country_name":"United States",
+                     "default":True}
+                ]
+        }
+        request = self.factory.customer_create(path, data)
+        response = views.shopify_customer_create(request, self.siteid)
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+
+        customer_objects = models.Customer.objects.all()
+        self.assertEqual(len(customer_objects), 1,
+                         'View did not create a new Customer object')
+
+        customer = customer_objects[0]
+        self.assertEqual(customer.shopify_id, data['id'],
+                         'The created customer has an incorrect shopify_id')
+        self._check_copy_field_validity(customer, data)
+        self.assertEqual(customer.total_spent, Decimal(data['total_spent']),
+                         'The created customer has an incorrect total_spent')
+
+        # Modify `data` and create a second customer.
+        data['first_name'] = 'Test2'
+        data['email'] = 'testyou@example.com'
+        data['id'] = 553412612
+        data['tags'] = 'hello, world'
+
+        request = self.factory.customer_create(path, data)
+        response = views.shopify_customer_create(request, self.siteid)
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+
+        customer = models.Customer.objects.get(shopify_id=data['id'])
+        self._check_copy_field_validity(customer, data)
+
+        tags_as_str = []
+        for tag in customer.tags.all():
+            tags_as_str.append(tag.name)
+
+        self.assertIn('hello', tags_as_str,
+                      'The created customer is missing a tag')
+        self.assertIn('world', tags_as_str,
+                      'The created customer is missing a tag')
+
+        # TODO: add tests for the address fields when address parsing is
+        #   complete in the view.
+
+
 class TesteShopifyMinimalData(TestCase):
     '''
     Test that the minimal amount of data Shopify will allow is still
@@ -100,36 +269,6 @@ class TestShopifyWebHooksTestData(TestCase):
 
     def test_shopify_fulfillment_update(self):
         self.skipTest("Test not implemented")
-
-    def test_shopify_customer_create(self):
-        path = '/webhooks/shopify/%s/customer_create' % self.siteid
-        data = {"accepts_marketing":True,
-                "created_at":None,
-                "email":"bob@biller.com",
-                "first_name":"Bob",
-                "id":None,
-                "last_name":"Biller",
-                "last_order_id":None,
-                "multipass_identifier":None,
-                "note":"This customer loves ice cream",
-                "orders_count":0,
-                "state":"disabled",
-                "tax_exempt":False,
-                "total_spent":"0.00",
-                "updated_at":None,
-                "verified_email":True,
-                "tags":"",
-                "last_order_name":None,
-                "addresses":[]
-        }
-        request = self.factory.customer_create(path, data)
-        response = views.shopify_customer_create(request, self.siteid)
-
-        self.assertEqual(response.status_code, 200,
-                         'View returned an HTTP error code')
-        self.assertEqual(len(models.Customer.objects.all()), 0,
-                         'Test requests should not be added.')
-
 
     def test_shopify_customer_enable(self):
         self.skipTest("Test not implemented")
@@ -315,104 +454,6 @@ class TestShopifyWebHooksValidData(TestCase):
 
     def test_shopify_fulfillment_update(self):
         self.skipTest("Test not implemented")
-
-    def test_shopify_customer_create(self):
-        path = '/webhooks/shopify/%s/customer_create' % self.siteid
-        data = {"accepts_marketing":False,
-                "created_at":"2015-05-27T19:12:18+01:00",
-                "email":"testme@example.com",
-                "first_name":"Test",
-                "id":553412611,
-                "last_name":"Customer",
-                "last_order_id":None,
-                "multipass_identifier":None,
-                "note":"",
-                "orders_count":0,
-                "state":"disabled",
-                "tax_exempt":False,
-                "total_spent":"0.00",
-                "updated_at":"2015-05-27T19:12:19+01:00",
-                "verified_email":True,
-                "tags":"",
-                "last_order_name":None,
-                "default_address":{
-                    "address1":"",
-                    "address2":"",
-                    "city":"",
-                    "company":"",
-                    "country":"United States",
-                    "first_name":"Test",
-                    "id":638359939,
-                    "last_name":"Customer",
-                    "phone":"",
-                    "province":"Alabama",
-                    "zip":"",
-                    "name":"Test Customer",
-                    "province_code":"AL",
-                    "country_code":"US",
-                    "country_name":"United States",
-                    "default":True},
-                "addresses":[
-                    {"address1":"",
-                     "address2":"",
-                     "city":"",
-                     "company":"",
-                     "country":"United States",
-                     "first_name":"Test",
-                     "id":638359939,
-                     "last_name":"Customer",
-                     "phone":"",
-                     "province":"Alabama",
-                     "zip":"",
-                     "name":"Test Customer",
-                     "province_code":"AL",
-                     "country_code":"US",
-                     "country_name":"United States",
-                     "default":True}
-                ]
-        }
-        request = self.factory.customer_create(path, data)
-        response = views.shopify_customer_create(request, self.siteid)
-        self.assertEqual(response.status_code, 200,
-                         'View returned an HTTP error code')
-
-        customer_objects = models.Customer.objects.all()
-        self.assertEqual(len(customer_objects), 1,
-                         'View did not create a new Customer object')
-
-        customer = customer_objects[0]
-        self.assertEqual(customer.shopify_id, data['id'],
-                         'The created customer has an incorrect shopify_id')
-        self.__check_copy_field_validity(customer, data)
-        self.assertEqual(customer.total_spent, Decimal(data['total_spent']),
-                         'The created customer has an incorrect total_spent')
-
-        # Modify `data` and create a second customer.
-        data['first_name'] = 'Test2'
-        data['email'] = 'testyou@example.com'
-        data['id'] = 553412612
-        data['tags'] = 'hello, world'
-
-        request = self.factory.customer_create(path, data)
-        response = views.shopify_customer_create(request, self.siteid)
-        self.assertEqual(response.status_code, 200,
-                         'View returned an HTTP error code')
-
-        customer = models.Customer.objects.get(shopify_id=data['id'])
-        self.__check_copy_field_validity(customer, data)
-
-        tags_as_str = []
-        for tag in customer.tags.all():
-            tags_as_str.append(tag.name)
-
-        self.assertIn('hello', tags_as_str,
-                      'The created customer is missing a tag')
-        self.assertIn('world', tags_as_str,
-                      'The created customer is missing a tag')
-
-        # TODO: add tests for the address fields when address parsing is
-        #   complete in the view.
-
 
     def test_shopify_customer_enable(self):
         self.skipTest("Test not implemented")

@@ -370,6 +370,145 @@ class TestShopifyCustomerDelete(ShopifyViewTest):
                          'The last object should have been deleted')
 
 
+class TestShopifyShopUpdate(ShopifyViewTest):
+    '''
+    Test that the shopify_shop_update view behaves correctly.
+    '''
+    def test_with_test_data(self):
+        '''
+        Send the data from the Shopify test webhook button and monitor
+        for proper behavior.
+        '''
+        # Test shop creation
+        path = '/webhooks/shopify/%s/shop_update' % self.siteid
+        data = {"address1":"190 MacLaren Street",
+                "city":"Houston",
+                "country":"US",
+                "created_at":None,
+                "customer_email":None,
+                "domain":None,
+                "email":"super@supertoys.com",
+                "id":None,
+                "latitude":None,
+                "longitude":None,
+                "name":"Super Toys",
+                "phone":"3213213210",
+                "primary_locale":"en",
+                "primary_location_id":None,
+                "province":"Tennessee",
+                "source":None,
+                "zip":"37178",
+                "country_code":"US",
+                "country_name":"United States",
+                "currency":"USD",
+                "timezone":"(GMT-05:00) Eastern Time (US \u0026 Canada)",
+                "iana_timezone":None,
+                "shop_owner":"N\/A",
+                "money_format":"$ {{amount}}",
+                "money_with_currency_format":"$ {{amount}} USD",
+                "province_code":"TN",
+                "taxes_included":None,
+                "tax_shipping":None,
+                "county_taxes":None,
+                "plan_display_name":None,
+                "plan_name":None,
+                "myshopify_domain":None,
+                "google_apps_domain":None,
+                "google_apps_login_enabled":None,
+                "money_in_emails_format":"${{amount}}",
+                "money_with_currency_in_emails_format":"${{amount}} USD",
+                "eligible_for_payments":True,
+                "requires_extra_payments_agreement":False,
+                "password_enabled":None,
+                "has_storefront":False
+        }
+        request = self.factory.shop_update(path, data)
+        response = views.shopify_shop_update(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+        shops = models.Shop.objects.all()
+        self.assertEqual(len(shops), 0,
+                         'The test request should not create a shop')
+
+    def test_with_valid_data(self):
+        '''
+        Test that this view creates a new shop in the case that the
+        shop to be updated does not exist. If the shop does exist,
+        check that it is updated.
+        '''
+        path = '/webhooks/shopify/%s/shop_update' % self.id
+        data = {"address1":"121 West Sprint Street",
+                "city":"Appleton",
+                "country":"US",
+                "created_at":"2015-05-19T17:45:19+01:00",
+                "customer_email":'sales@example.com',
+                "domain":"example.myshopify.com",
+                "email":"test@example.com",
+                "id":8711838,
+                "latitude":12.4567,
+                "longitude":-80.1234,
+                "name":"My First Test Store",
+                "phone":"",
+                "primary_locale":"en",
+                "primary_location_id":None,
+                "province":"Wisconsin",
+                "source":"learn-more",
+                "zip":"12345",
+                "country_code":"US",
+                "country_name":"United States",
+                "currency":"USD",
+                "timezone":"(GMT+00:00) London",
+                "iana_timezone":"Europe\/London",
+                "shop_owner":"Austin Hartzheim",
+                "money_format":"$ {{amount}}",
+                "money_with_currency_format":"$ {{amount}} USD",
+                "province_code":"WI",
+                "taxes_included":False,
+                "tax_shipping":None,
+                "county_taxes":None,
+                "plan_display_name":"affiliate",
+                "plan_name":"affiliate",
+                "myshopify_domain":"example.myshopify.com",
+                "google_apps_domain":None,
+                "google_apps_login_enabled":None,
+                "money_in_emails_format":"${{amount}}",
+                "money_with_currency_in_emails_format":"${{amount}} USD",
+                "eligible_for_payments":True,
+                "requires_extra_payments_agreement":False,
+                "password_enabled":True,
+                "has_storefront":True
+        }
+        request = self.factory.shop_update(path, data)
+        response = views.shopify_shop_update(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error')
+        shops = models.Shop.objects.all()
+        self.assertEqual(len(shops), 1, 'One shop should exist')
+        shop = shops[0]
+
+        self.assertEqual(shop.shopify_id, data['id'],
+                         'Created shop has incorrect shopify_id value')
+        self._check_copy_field_validity(shop, data)
+
+        # Test shop update
+        data['city'] = 'New York'
+        data['shop_owner'] = 'Bob Smith'
+
+        request = self.factory.shop_update(path, data)
+        response = views.shopify_shop_update(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+        shops = models.Shop.objects.all()
+        self.assertEqual(len(shops), 1, 'One shop should exist')
+        shop = shops[0]
+        self.assertEqual(shop.shopify_id, data['id'],
+                         'Created shop has an incorrect shopify_id')
+        self._check_copy_field_validity(shop, data)
+
+
 class TesteShopifyMinimalData(TestCase):
     '''
     Test that the minimal amount of data Shopify will allow is still
@@ -472,59 +611,6 @@ class TestShopifyWebHooksTestData(TestCase):
     def test_shopify_customer_disable(self):
         self.skipTest("Test not implemented")
 
-    def test_shopify_shop_update(self):
-        # Test shop creation
-        path = '/webhooks/shopify/%s/shop_update' % self.siteid
-        data = {"address1":"190 MacLaren Street",
-                "city":"Houston",
-                "country":"US",
-                "created_at":None,
-                "customer_email":None,
-                "domain":None,
-                "email":"super@supertoys.com",
-                "id":None,
-                "latitude":None,
-                "longitude":None,
-                "name":"Super Toys",
-                "phone":"3213213210",
-                "primary_locale":"en",
-                "primary_location_id":None,
-                "province":"Tennessee",
-                "source":None,
-                "zip":"37178",
-                "country_code":"US",
-                "country_name":"United States",
-                "currency":"USD",
-                "timezone":"(GMT-05:00) Eastern Time (US \u0026 Canada)",
-                "iana_timezone":None,
-                "shop_owner":"N\/A",
-                "money_format":"$ {{amount}}",
-                "money_with_currency_format":"$ {{amount}} USD",
-                "province_code":"TN",
-                "taxes_included":None,
-                "tax_shipping":None,
-                "county_taxes":None,
-                "plan_display_name":None,
-                "plan_name":None,
-                "myshopify_domain":None,
-                "google_apps_domain":None,
-                "google_apps_login_enabled":None,
-                "money_in_emails_format":"${{amount}}",
-                "money_with_currency_in_emails_format":"${{amount}} USD",
-                "eligible_for_payments":True,
-                "requires_extra_payments_agreement":False,
-                "password_enabled":None,
-                "has_storefront":False
-        }
-        request = self.factory.shop_update(path, data)
-        response = views.shopify_shop_update(request, self.siteid)
-
-        self.assertEqual(response.status_code, 200,
-                         'View returned an HTTP error code')
-        shops = models.Shop.objects.all()
-        self.assertEqual(len(shops), 0,
-                         'The test request should not create a shop')
-
     def test_shopify_refund_create(self):
         self.skipTest("Test not implemented")
 
@@ -616,83 +702,6 @@ class TestShopifyWebHooksValidData(TestCase):
 
     def test_shopify_customer_disable(self):
         self.skipTest("Test not implemented")
-
-    def test_shopify_shop_update(self):
-        '''
-        Test that this view creates a new shop in the case that the
-        shop to be updated does not exist. If the shop does exist,
-        check that it is updated.
-        '''
-        path = '/webhooks/shopify/%s/shop_update' % self.id
-        data = {"address1":"121 West Sprint Street",
-                "city":"Appleton",
-                "country":"US",
-                "created_at":"2015-05-19T17:45:19+01:00",
-                "customer_email":'sales@example.com',
-                "domain":"example.myshopify.com",
-                "email":"test@example.com",
-                "id":8711838,
-                "latitude":12.4567,
-                "longitude":-80.1234,
-                "name":"My First Test Store",
-                "phone":"",
-                "primary_locale":"en",
-                "primary_location_id":None,
-                "province":"Wisconsin",
-                "source":"learn-more",
-                "zip":"12345",
-                "country_code":"US",
-                "country_name":"United States",
-                "currency":"USD",
-                "timezone":"(GMT+00:00) London",
-                "iana_timezone":"Europe\/London",
-                "shop_owner":"Austin Hartzheim",
-                "money_format":"$ {{amount}}",
-                "money_with_currency_format":"$ {{amount}} USD",
-                "province_code":"WI",
-                "taxes_included":False,
-                "tax_shipping":None,
-                "county_taxes":None,
-                "plan_display_name":"affiliate",
-                "plan_name":"affiliate",
-                "myshopify_domain":"example.myshopify.com",
-                "google_apps_domain":None,
-                "google_apps_login_enabled":None,
-                "money_in_emails_format":"${{amount}}",
-                "money_with_currency_in_emails_format":"${{amount}} USD",
-                "eligible_for_payments":True,
-                "requires_extra_payments_agreement":False,
-                "password_enabled":True,
-                "has_storefront":True
-        }
-        request = self.factory.shop_update(path, data)
-        response = views.shopify_shop_update(request, self.siteid)
-
-        self.assertEqual(response.status_code, 200,
-                         'View returned an HTTP error')
-        shops = models.Shop.objects.all()
-        self.assertEqual(len(shops), 1, 'One shop should exist')
-        shop = shops[0]
-
-        self.assertEqual(shop.shopify_id, data['id'],
-                         'Created shop has incorrect shopify_id value')
-        self.__check_copy_field_validity(shop, data)
-
-        # Test shop update
-        data['city'] = 'New York'
-        data['shop_owner'] = 'Bob Smith'
-
-        request = self.factory.shop_update(path, data)
-        response = views.shopify_shop_update(request, self.siteid)
-
-        self.assertEqual(response.status_code, 200,
-                         'View returned an HTTP error code')
-        shops = models.Shop.objects.all()
-        self.assertEqual(len(shops), 1, 'One shop should exist')
-        shop = shops[0]
-        self.assertEqual(shop.shopify_id, data['id'],
-                         'Created shop has an incorrect shopify_id')
-        self.__check_copy_field_validity(shop, data)
 
     def test_shopify_refund_create(self):
         self.skipTest("Test not implemented")

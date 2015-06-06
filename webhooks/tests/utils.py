@@ -19,6 +19,8 @@ class ShopifyRequestFactory():
         :param iterable omit: An iterable object of headers to omit.
           Note that only explicitly added for the Shopify emulation
           can be omitted.
+        :param dict override: A dictionary of (header, value) pairs
+          that will be used to override the default header values.
         '''
         self.omit = omit
         self.override = override
@@ -30,8 +32,8 @@ class ShopifyRequestFactory():
         returned request object will have headers and a Sha256 HMAC as
         if it was a real webhook request.
         
-        :param :class:`django.test.RequestFactory` factory: A Django
-          RequestFactory for generating the request object.
+        :param str path: The path which the emulated request would have
+          if it actually reached the view.
         :param dict data: This dict will be converted to a JSON string,
           used to compute the HMAC, and used as the request body.
         :param str topic: The topic for the Shopify-Topic header. This
@@ -61,7 +63,7 @@ class ShopifyRequestFactory():
         for header, value in self.override.items():
             headers[header] = value
 
-        # Create the post request
+        # Create the POST request
         return self.factory.post(path, datastr, **headers)
 
 

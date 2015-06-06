@@ -9,7 +9,7 @@ from logify import private_settings
 class ValidateShopifyWebhookRequest():
     def __init__(self, view):
         self.view = view
-        
+
     def __call__(self, request, siteid, *args, **kwargs):
         '''
         Check that `request` is a POST request that contains the
@@ -22,7 +22,7 @@ class ValidateShopifyWebhookRequest():
         # Check that the request is using the POST method
         if request.method != 'POST':
             return django.http.HttpResponseNotAllowed(['POST'])
-        
+
         # Check that the headers exist.
         if 'HTTP_X_SHOPIFY_SHOP_DOMAIN' not in request.META:
             return django.http.HttpResponseBadRequest('missing X-Shopify-Shop-Domain')
@@ -36,14 +36,14 @@ class ValidateShopifyWebhookRequest():
             return django.http.HttpResponseBadRequest('missing Content-Type')
         if request.META['CONTENT_TYPE'] != 'application/json':
             return django.http.HttpResponseBadRequest('bad Content-Type')
-        
+
         # Check that the HMAC is valid
         if not self.validate_shopify_webhook_hmac(request):
             return django.http.HttpResponseForbidden('Invalid HMAC')
-        
-        # The checks pass; forward the code to the view
+
+        # The checks pass; forward the request to the view
         return self.view(request, siteid, *args, **kwargs)
-    
+
     def validate_shopify_webhook_hmac(self, request):
         '''
         Check that the necessary headers are included on the request and
@@ -56,13 +56,13 @@ class ValidateShopifyWebhookRequest():
         '''
         if 'HTTP_X_SHOPIFY_HMAC_SHA256' not in request.META:
             return False
-        
+
         shared_secret = private_settings.SHARED_SECRET.encode('utf8')
         digest = hmac.new(shared_secret, request.body, sha256).digest()
         digest = base64.b64encode(digest).decode('utf8')
-        
+
         return self.__safe_compare(digest, request.META['HTTP_X_SHOPIFY_HMAC_SHA256'])
-        
+
     @staticmethod
     def __safe_compare(a, b):
         '''
@@ -78,7 +78,7 @@ class ValidateShopifyWebhookRequest():
         except AttributeError:
             if len(a) != len(b):
                 return False
-            
+
             result = True
             count = 0  # Hack to prevent optimization
             for i in range(0, len(a)):
@@ -86,4 +86,3 @@ class ValidateShopifyWebhookRequest():
                     result = False
                 count += 1
             return result
-                

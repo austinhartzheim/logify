@@ -90,6 +90,10 @@ class ShopifyRequestFactory():
         topic = 'customers/create'
         return self.create_shopify_webhook_request(path, data, topic)
 
+    def customer_enable(self, path, data):
+        topic = 'customer/enable'
+        return self.create_shopify_webhook_request(path, data, topic)
+
     def customer_update(self, path, data):
         topic = 'customers/update'
         return self.create_shopify_webhook_request(path, data, topic)

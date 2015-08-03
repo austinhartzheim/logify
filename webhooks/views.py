@@ -171,7 +171,6 @@ def shopify_customer_enable(request, siteid):
     object. If the ID does not exist, then create a new customer
     object with the given data.
     '''
-
     data = json.loads(request.body.decode('utf8'))
     if data['id'] == None:  # Test request
         return django.http.HttpResponse()
@@ -184,6 +183,8 @@ def shopify_customer_enable(request, siteid):
     customer.state = 'enabled'
     customer.updated_at = dateutil.parser.parse(data['updated_at'])
     customer.save()
+
+    return django.http.HttpResponse()
 
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest

@@ -208,6 +208,8 @@ def shopify_customer_disable(request, siteid):
     customer.updated_at = dateutil.parser.parse(data['updated_at'])
     customer.save()
 
+    return django.http.HttpResponse()
+
 @csrf_exempt
 @validate.ValidateShopifyWebhookRequest
 def shopify_customer_update(request, siteid):

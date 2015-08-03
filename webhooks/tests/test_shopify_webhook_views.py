@@ -364,6 +364,120 @@ class TestShopifyCustomerEnable(ShopifyViewTest):
                          'Created customer is not "enabled"')
 
 
+class TestShopifyCustomerDisable(ShopifyViewTest):
+    '''
+    Test that the shopify_customer_disable view behaves correctly.
+    '''
+    def test_with_test_data(self):
+        path = '/webhooks/shopify/%s/customer_disable' % self.siteid
+        data = {
+            'accepts_marketing': True,
+            'addresses': [],
+            'created_at': None,
+            'email': 'bob@biller.com',
+            'first_name': 'Bob',
+            'id': None,
+            'last_name': 'Biller',
+            'last_order_id': None,
+            'last_order_name': None,
+            'multipass_identifier': None,
+            'note': 'This customer loves ice cream',
+            'orders_count': 0,
+            'state': 'disabled',
+            'tags': '',
+            'tax_exempt': False,
+            'total_spent': '0.00',
+            'updated_at': None,
+            'verified_email': True
+        }
+
+        request = self.factory.customer_enable(path, data)
+        response = views.shopify_customer_disable(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+        self.assertEqual(len(models.Customer.objects.all()), 0,
+                         'Test requests should not be added')
+
+    def test_with_disabled_customer(self):
+        '''
+        Test that this webhook functions properly on a disabled
+        customer.
+        '''
+        # Create a customer
+        customer = models.Customer(shopify_id=534645123, state='disabled')
+        customer.save()
+
+        # Enable the customer
+        path = '/webhooks/shopify/%s/customer_disable' % self.siteid
+        data = {
+            'accepts_marketing': True,
+            'addresses': [],
+            'created_at': None,
+            'email': 'bob@biller.com',
+            'first_name': 'Bob',
+            'id': 534645123,
+            'last_name': 'Biller',
+            'last_order_id': None,
+            'last_order_name': None,
+            'multipass_identifier': None,
+            'note': 'This customer loves ice cream',
+            'orders_count': 0,
+            'state': 'disable',
+            'tags': '',
+            'tax_exempt': False,
+            'total_spent': '0.00',
+            'updated_at': '2015-05-27T19:12:19+01:00',
+            'verified_email': True
+        }
+        request = self.factory.customer_enable(path, data)
+        response = views.shopify_customer_disable(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+        customer = models.Customer.objects.get(shopify_id=534645123)
+        self.assertEqual(customer.state, 'disabled',
+                         'Customer state not changed to enabled')
+
+    def test_with_invalid_customer(self):
+        '''
+        Test that this webhook creates a customer when it receives a
+        request to enable a customer that does not exist.
+        '''
+        path = '/webhooks/shopify/%s/customer_disable' % self.siteid
+        data = {
+            'accepts_marketing': True,
+            'addresses': [],
+            'created_at': '2015-05-27T19:12:19+01:00',
+            'email': 'bob@biller.com',
+            'first_name': 'Bob',
+            'id': 534645123,
+            'last_name': 'Biller',
+            'last_order_id': None,
+            'last_order_name': None,
+            'multipass_identifier': None,
+            'note': 'This customer loves ice cream',
+            'orders_count': 0,
+            'state': 'disabled',
+            'tags': '',
+            'tax_exempt': False,
+            'total_spent': '0.00',
+            'updated_at': '2015-05-27T19:12:19+01:00',
+            'verified_email': True
+        }
+        request = self.factory.customer_enable(path, data)
+        response = views.shopify_customer_enable(request, self.siteid)
+
+        self.assertEqual(response.status_code, 200,
+                         'View returned an HTTP error code')
+        customers = models.Customer.objects.all()
+        self.assertEqual(len(customers), 1,
+                         'Customer object was not created')
+        customer = customers[0]
+        self.assertEqual(customer.state, 'disabled',
+                         'Created customer is not "disabled"')
+
+
 class TestShopifyCustomerUpdate(ShopifyViewTest):
     '''
     Test that the shopify_customer_update view behaves correctly.

@@ -71,7 +71,7 @@ class TestShopifyCustomerCreate(ShopifyViewTest):
 
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
-        self.assertEqual(len(models.Customer.objects.all()), 0,
+        self.assertEqual(models.Customer.objects.count(), 0,
                          'Test requests should not be added.')
 
     def test_with_valid_data(self):
@@ -140,11 +140,10 @@ class TestShopifyCustomerCreate(ShopifyViewTest):
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
 
-        customer_objects = models.Customer.objects.all()
-        self.assertEqual(len(customer_objects), 1,
+        self.assertEqual(models.Customer.objects.count(), 1,
                          'View did not create a new Customer object')
 
-        customer = customer_objects[0]
+        customer = models.Customer.objects.all()[0]
         self.assertEqual(customer.shopify_id, data['id'],
                          'The created customer has an incorrect shopify_id')
         self._check_copy_field_validity(customer, data)
@@ -282,7 +281,7 @@ class TestShopifyCustomerEnable(ShopifyViewTest):
 
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
-        self.assertEqual(len(models.Customer.objects.all()), 0,
+        self.assertEqual(models.Customer.objects.count(), 0,
                          'Test requests should not be added')
 
     def test_with_disabled_customer(self):
@@ -356,10 +355,11 @@ class TestShopifyCustomerEnable(ShopifyViewTest):
 
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
-        customers = models.Customer.objects.all()
-        self.assertEqual(len(customers), 1,
+
+        self.assertEqual(models.Customer.objects.count(), 1,
                          'Customer object was not created')
-        customer = customers[0]
+
+        customer = models.Customer.objects.all()[0]
         self.assertEqual(customer.state, 'enabled',
                          'Created customer is not "enabled"')
 
@@ -396,7 +396,7 @@ class TestShopifyCustomerDisable(ShopifyViewTest):
 
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
-        self.assertEqual(len(models.Customer.objects.all()), 0,
+        self.assertEqual(models.Customer.objects.count(), 0,
                          'Test requests should not be added')
 
     def test_with_disabled_customer(self):
@@ -470,10 +470,10 @@ class TestShopifyCustomerDisable(ShopifyViewTest):
 
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
-        customers = models.Customer.objects.all()
-        self.assertEqual(len(customers), 1,
+        self.assertEqual(models.Customer.objects.count(), 1,
                          'Customer object was not created')
-        customer = customers[0]
+
+        customer = models.Customer.objects.all()[0]
         self.assertEqual(customer.state, 'disabled',
                          'Created customer is not "disabled"')
 
@@ -508,7 +508,7 @@ class TestShopifyCustomerUpdate(ShopifyViewTest):
 
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
-        self.assertEqual(len(models.Customer.objects.all()), 0,
+        self.assertEqual(models.Customer.objects.count(), 0,
                          'Test requests should not be added')
 
     def test_shopify_customer_update(self):
@@ -579,11 +579,10 @@ class TestShopifyCustomerUpdate(ShopifyViewTest):
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
 
-        customers = models.Customer.objects.all()
-        self.assertEqual(len(customers), 1,
+        self.assertEqual(models.Customer.objects.count(), 1,
                          'Customer update resulted in incorrect object count')
 
-        customer = customers[0]
+        customer = models.Customer.objects.all()[0]
         self._check_copy_field_validity(customer, data)
 
         tags_as_str = []
@@ -604,11 +603,10 @@ class TestShopifyCustomerUpdate(ShopifyViewTest):
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
 
-        customers = models.Customer.objects.all()
-        self.assertEqual(len(customers), 1,
+        self.assertEqual(models.Customer.objects.count(), 1,
                          'Customer update resulted in incorrect object count')
 
-        customer = customers[0]
+        customer = models.Customer.objects.all()[0]
         self._check_copy_field_validity(customer, data)
 
         tags_as_str = []
@@ -662,7 +660,7 @@ class TestShopifyCustomerDelete(ShopifyViewTest):
 
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
-        self.assertEqual(len(models.Customer.objects.all()), 0,
+        self.assertEqual(models.Customer.objects.count(), 0,
                          'Customer not correctly deleted')
 
         # Reply the delete to test when customer does not exist
@@ -670,7 +668,7 @@ class TestShopifyCustomerDelete(ShopifyViewTest):
 
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
-        self.assertEqual(len(models.Customer.objects.all()), 0,
+        self.assertEqual(models.Customer.objects.count(), 0,
                          'The last object should have been deleted')
 
 
@@ -731,8 +729,7 @@ class TestShopifyShopUpdate(ShopifyViewTest):
 
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
-        shops = models.Shop.objects.all()
-        self.assertEqual(len(shops), 0,
+        self.assertEqual(models.Shop.objects.count(), 0,
                          'The test request should not create a shop')
 
     def test_with_valid_data(self):
@@ -788,10 +785,10 @@ class TestShopifyShopUpdate(ShopifyViewTest):
 
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error')
-        shops = models.Shop.objects.all()
-        self.assertEqual(len(shops), 1, 'One shop should exist')
-        shop = shops[0]
+        self.assertEqual(models.Shop.objects.count(), 1,
+                         'One shop should exist')
 
+        shop = models.Shop.objects.all()[0]
         self.assertEqual(shop.shopify_id, data['id'],
                          'Created shop has incorrect shopify_id value')
         self._check_copy_field_validity(shop, data)
@@ -805,9 +802,10 @@ class TestShopifyShopUpdate(ShopifyViewTest):
 
         self.assertEqual(response.status_code, 200,
                          'View returned an HTTP error code')
-        shops = models.Shop.objects.all()
-        self.assertEqual(len(shops), 1, 'One shop should exist')
-        shop = shops[0]
+        self.assertEqual(models.Shop.objects.count(), 1,
+                         'One shop should exist')
+
+        shop = models.Shop.objects.all()[0]
         self.assertEqual(shop.shopify_id, data['id'],
                          'Created shop has an incorrect shopify_id')
         self._check_copy_field_validity(shop, data)
